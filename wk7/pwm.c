@@ -1,0 +1,92 @@
+#include <msp430.h>
+
+int direction = 1;
+
+int main(void)
+{
+    WDTCTL  = WDTPW | WDTHOLD;
+    BCSCTL1 = CALBC1_1MHZ;
+    DCOCTL  = CALDCO_1MHZ;
+
+    P1DIR = BIT2;
+    P1OUT &= ~BIT2;
+    P1SEL &= ~BIT2;
+
+    TA0CTL   = TASSEL_2 | MC_1 | ID_0;
+    TA0CCR0  = 1042;
+    TA0CCR1  = 11;
+    TA0CCTL0 = CCIE;
+    TA0CCTL1 = OUTMOD_7;
+
+    P2DIR = BIT1;
+    P2OUT &= ~BIT1;
+    P2SEL = BIT1;
+
+    TA1CTL   = TASSEL_2 | MC_1 | ID_0;
+    TA1CCR0  = 1042;
+    TA1CCR1  = 11;
+    TA1CCTL0 = CCIE;
+    TA1CCTL1 = OUTMOD_7;
+
+    P1REN  =  BIT3;
+    P1OUT  =  BIT3;
+    P1IE   =  BIT3;
+    P1IES  =  BIT3;
+    P1IFG &= ~BIT3;
+
+    _BIS_SR(LPM0_bits | GIE);
+
+    for (;;);
+
+    return 0;
+}
+
+#pragma vector=TIMER0_A0_VECTOR
+__interrupt void blink_green(void)
+{
+/*
+    if (TA0CCR1 == 1000 || TA1CCR1 == 1000) {
+        direction = 0;
+    } else if (TA0CCR1 == 10 || TA1CCR1 == 10) {
+        direction = 1;
+    }
+*/
+    if (TA0CCR1 == 1000 || TA0CCR1 == 10) {
+        direction ^= -2;
+    }
+/*
+    if (direction) {
+        TA0CCR1 += 1;
+        TA1CCR1 += 1;
+    } else {
+        TA0CCR1 -= 1;
+        TA1CCR1 -= 1;
+    }
+*/
+    TA0CCR1 += direction;
+    TA1CCR1 += direction;
+
+}
+
+#pragma vector=TIMER1_A0_VECTOR
+__interrupt void blink_red(void)
+{
+    if (TA1CCR1 == 1000 || TA1CCR1 == 10) {
+        direction ^= -2;
+    }
+    
+    TA0CCR1 += direction;
+    TA1CCR1 += direction;
+}
+
+#pragma vector=PORT1_VECTOR
+__interrupt void button(void)
+{
+    P1SEL ^= BIT6;
+    P2SEL ^= BIT1;
+
+    while (!(P1IN & BIT3)) {}
+    __delay_cycles(32000);
+    P1IFG &= ~BIT3;
+}
+

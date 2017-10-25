@@ -1,0 +1,14 @@
+macallister.j.armstrong
+a3
+`make flash` compiles and flashes `a3.c`
+
+mode 1 correct
+mode 2 correct
+mode 3 correct
+mode 4 correct
+
+good comments
+
+mode selection in main loop is awkward - consider that it could be done in the button interrupt handler (with a SWITCH/CASE or IF/THEN) and would only run once each time the button is pressed.
+
+19/20
